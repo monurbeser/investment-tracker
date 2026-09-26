@@ -1,0 +1,37 @@
+{
+  "name": "investment-tracker",
+  "version": "1.0.0",
+  "description": "Dubai odaklı çoklu varlık yatırım takip paneli (UAE borsaları, NASDAQ/NYSE, ETF/fonlar, UAE tahvilleri, Binance kripto, arbitraj/döviz)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monurbeser/investment-tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/monurbeser/investment-tracker/issues"
+  },
+  "homepage": "https://github.com/monurbeser/investment-tracker#readme",
+  "dependencies": {
+    "lightweight-charts": "^4.2.3",
+    "next": "^16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2"
+  },
+  "private": true
+}
