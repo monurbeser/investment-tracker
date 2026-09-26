@@ -46,6 +46,14 @@ jobs:
         run: npx tsx scripts/snapshot.ts public
         env:
           YAHOO_BASE: http://127.0.0.1:8765
+      - name: "Diagnostics: Yahoo symbols for ADX companies"
+        if: always()
+        run: |
+          for q in "Aldar Properties" "First Abu Dhabi Bank" "Abu Dhabi Commercial Bank" "International Holding Company" "Emirates Telecommunications" "ADNOC Gas" "ADNOC Drilling" "Abu Dhabi National Energy"; do
+            echo "== $q"
+            curl -s "http://127.0.0.1:8765/v1/finance/search?q=$(python -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$q")&quotesCount=6&newsCount=0" \
+              | python -c "import json,sys;[print(' ',x.get('symbol'),x.get('exchange'),x.get('exchDisp'),x.get('shortname')) for x in json.load(sys.stdin).get('quotes',[])]" || true
+          done
       - name: Yahoo forwarder log
         if: always()
         run: tail -n 40 yahoo_proxy.log || true
