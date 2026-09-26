@@ -1,4 +1,4 @@
-import type { TriangularOpportunity } from "./types";
+import type { PremiumRow, TriangularOpportunity } from "./types";
 
 export interface Book {
   symbol: string;
@@ -49,4 +49,36 @@ export function triangular(idx: BookIndex, start: string, assets: string[], feeP
     }
   }
   return out.sort((x, y) => y.netPct - x.netPct).slice(0, top);
+}
+
+/** Common quote assets, longest first, for splitting a Binance symbol without exchangeInfo. */
+const QUOTES = ["FDUSD", "USDT", "USDC", "TUSD", "BTC", "ETH", "BNB", "EUR", "TRY", "BRL", "ARS", "ZAR", "UAH", "PLN", "RON", "MXN", "COP", "JPY", "IDR", "CZK", "DAI", "XRP", "DOGE", "TRX", "SOL"];
+
+export function splitSymbol(symbol: string): { base: string; quote: string } | null {
+  for (const q of QUOTES) if (symbol.length > q.length && symbol.endsWith(q)) return { base: symbol.slice(0, -q.length), quote: q };
+  return null;
+}
+
+export const TRI_ASSETS = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "TRX", "LINK", "LTC", "DOT", "AVAX", "TON", "USDC", "FDUSD", "EUR", "TRY", "BRL"];
+export const PREMIUM_FIATS = ["TRY", "BRL", "ARS", "ZAR", "UAH", "PLN", "RON", "MXN", "COP", "JPY", "IDR", "CZK"];
+
+/**
+ * USDT premium vs. the official USD rate for each fiat with a USDT/<fiat> book,
+ * plus EUR via EUR/USDT vs EURUSD. `officials` maps fiat -> USD<fiat> rate.
+ */
+export function premiums(idx: BookIndex, officials: Record<string, number>, eurusd: number | null): PremiumRow[] {
+  const rows: PremiumRow[] = [];
+  for (const f of PREMIUM_FIATS) {
+    const book = idx.get(`USDT/${f}`);
+    const official = officials[f];
+    if (!book || !official) continue;
+    const mid = (book.bid + book.ask) / 2;
+    rows.push({ fiat: f, binanceSymbol: book.symbol, binanceRate: mid, officialRate: official, premiumPct: (mid / official - 1) * 100 });
+  }
+  const eur = idx.get("EUR/USDT");
+  if (eur && eurusd) {
+    const mid = (eur.bid + eur.ask) / 2;
+    rows.push({ fiat: "EUR", binanceSymbol: eur.symbol, binanceRate: mid, officialRate: eurusd, premiumPct: (mid / eurusd - 1) * 100 });
+  }
+  return rows.sort((a, b) => Math.abs(b.premiumPct) - Math.abs(a.premiumPct));
 }

@@ -41,3 +41,24 @@ describe("mergeLive", () => {
     expect(mergeLive(bars, q(1, 100), "daily", false)).toBe(bars);
   });
 });
+
+describe("static helpers", () => {
+  it("splits Binance symbols by quote asset", async () => {
+    const { splitSymbol } = await import("./arbitrage");
+    expect(splitSymbol("BTCUSDT")).toEqual({ base: "BTC", quote: "USDT" });
+    expect(splitSymbol("USDTTRY")).toEqual({ base: "USDT", quote: "TRY" });
+    expect(splitSymbol("ETHBTC")).toEqual({ base: "ETH", quote: "BTC" });
+    expect(splitSymbol("BTCFDUSD")).toEqual({ base: "BTC", quote: "FDUSD" });
+  });
+  it("computes USDT premiums against official rates", async () => {
+    const { premiums } = await import("./arbitrage");
+    const idx = indexBooks([
+      { symbol: "USDTTRY", base: "USDT", quote: "TRY", bid: 41.9, ask: 42.1 },
+      { symbol: "EURUSDT", base: "EUR", quote: "USDT", bid: 1.17, ask: 1.17 },
+    ]);
+    const rows = premiums(idx, { TRY: 40 }, 1.16);
+    expect(rows[0].fiat).toBe("TRY");
+    expect(rows[0].premiumPct).toBeCloseTo(5);
+    expect(rows[1].premiumPct).toBeCloseTo((1.17 / 1.16 - 1) * 100);
+  });
+});

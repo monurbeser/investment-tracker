@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Quote, QuotesResponse } from "../types";
+import type { Quote } from "../types";
+import { fetchQuotes } from "./api";
 
 export interface QuotesState {
   quotes: Record<string, Quote>;
@@ -24,8 +25,7 @@ export function useQuotes(ids: string[], intervalMs = 15000): QuotesState {
     let timer: ReturnType<typeof setTimeout>;
     const load = async () => {
       try {
-        const r = await fetch(`/api/quotes?ids=${encodeURIComponent(key)}`);
-        const data = (await r.json()) as QuotesResponse;
+        const data = await fetchQuotes(key.split(","));
         if (!alive) return;
         setState((s) => {
           const quotes = { ...s.quotes };

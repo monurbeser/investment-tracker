@@ -40,6 +40,18 @@ npm run dev                  # http://localhost:3000
 
 > Binance, bazı bölgelerden (ör. ABD) `api.binance.com` erişimini engeller; sunucu bu durumda `data-api.binance.vision` uç noktasına düşer. BAE’den erişimde sorun beklenmez.
 
+## Online sürüm (GitHub Pages)
+
+`.github/workflows/pages.yml` siteyi **https://monurbeser.github.io/investment-tracker/** adresine yayınlar:
+
+- Kripto fiyatları, kripto grafikleri ve arbitraj tabloları tarayıcıdan **doğrudan Binance’ten canlı** gelir (REST + WebSocket).
+- Yahoo Finance tarayıcıdan çağrılamadığı için (CORS) UAE/US hisseleri, ETF’ler, döviz ve tahvil modeli verileri iş akışı tarafından **~15 dakikada bir** çekilip JSON olarak yayınlanır; üst barda “Yahoo verisi: SS:DD (x dk önce)” rozeti bu zamanı gösterir. GitHub zamanlanmış işleri yoğunlukta gecikebilir.
+- Statik sürümde arama yalnızca katalogdaki semboller ve Binance çiftleriyle sınırlıdır.
+- İlk kurulumda bir kez: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+- GitHub, 60 gün boyunca commit olmayan depolarda zamanlanmış iş akışlarını durdurur; Actions sekmesinden yeniden etkinleştirilebilir.
+
+Yerelde statik sürümü denemek: `npx tsx scripts/snapshot.ts public && ./scripts/build-static.sh` (çıktı `out/`).
+
 ## Mimari
 
 ```

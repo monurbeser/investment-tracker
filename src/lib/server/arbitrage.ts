@@ -1,5 +1,5 @@
 import type { ArbitrageResponse, FxRate, PremiumRow } from "../types";
-import { indexBooks, triangular, type Book } from "../arbitrage";
+import { indexBooks, premiums as premiumRows, triangular, PREMIUM_FIATS, TRI_ASSETS, type Book } from "../arbitrage";
 import { binanceBookTickers, binanceSymbols } from "./binance";
 import { yahooQuote } from "./yahoo";
 import { AED_PEG } from "./fx";
@@ -20,8 +20,6 @@ export const FX_PAIRS: { pair: string; label: string }[] = [
   { pair: "BZ=F", label: "Brent" },
 ];
 
-const TRI_ASSETS = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "TRX", "LINK", "LTC", "DOT", "AVAX", "TON", "USDC", "FDUSD", "EUR", "TRY", "BRL"];
-const PREMIUM_FIATS = ["TRY", "BRL", "ARS", "ZAR", "UAH", "PLN", "RON", "MXN", "COP", "JPY", "IDR", "CZK"];
 
 export async function getArbitrage(feePct: number): Promise<ArbitrageResponse> {
   const fetchedAt = new Date().toISOString();
@@ -29,29 +27,9 @@ export async function getArbitrage(feePct: number): Promise<ArbitrageResponse> {
 
   if (isDemo()) return demoArbitrage(feePct, fetchedAt);
 
-  const fxPromise = Promise.all(
-    FX_PAIRS.map(async ({ pair, label }): Promise<FxRate | null> => {
-      try {
-        const { meta } = await yahooQuote(pair);
-        const rate = meta.regularMarketPrice ?? NaN;
-        const prev = meta.chartPreviousClose ?? meta.previousClose;
-        return {
-          pair,
-          label,
-          rate,
-          changePct: prev ? (rate / prev - 1) * 100 : null,
-          asOf: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null,
-        };
-      } catch (e) {
-        errors.push(`${label}: ${(e as Error).message}`);
-        return null;
-      }
-    }),
-  );
-
   let triangularRows: ArbitrageResponse["triangular"] = [];
   let premiums: PremiumRow[] = [];
-  const fx = (await fxPromise).filter((x): x is FxRate => !!x);
+  const fx = await getFxRates(errors);
 
   try {
     const [books, symbols] = await Promise.all([binanceBookTickers(), binanceSymbols()]);
@@ -64,29 +42,8 @@ export async function getArbitrage(feePct: number): Promise<ArbitrageResponse> {
     const idx = indexBooks(list);
     triangularRows = triangular(idx, "USDT", TRI_ASSETS, feePct);
 
-    const officials = await Promise.all(
-      PREMIUM_FIATS.map(async (f) => {
-        const book = idx.get(`USDT/${f}`);
-        if (!book) return null;
-        try {
-          const { meta } = await yahooQuote(`USD${f}=X`);
-          const official = meta.regularMarketPrice;
-          if (!official) return null;
-          const mid = (book.bid + book.ask) / 2;
-          return { fiat: f, binanceSymbol: book.symbol, binanceRate: mid, officialRate: official, premiumPct: (mid / official - 1) * 100 };
-        } catch {
-          return null;
-        }
-      }),
-    );
-    premiums = officials.filter((x): x is PremiumRow => !!x);
-    const eur = idx.get("EUR/USDT");
-    const eurusd = fx.find((r) => r.pair === "EURUSD=X");
-    if (eur && eurusd?.rate) {
-      const mid = (eur.bid + eur.ask) / 2;
-      premiums.unshift({ fiat: "EUR", binanceSymbol: eur.symbol, binanceRate: mid, officialRate: eurusd.rate, premiumPct: (mid / eurusd.rate - 1) * 100 });
-    }
-    premiums.sort((a, b) => Math.abs(b.premiumPct) - Math.abs(a.premiumPct));
+    const eurusd = fx.find((r) => r.pair === "EURUSD=X")?.rate ?? null;
+    premiums = premiumRows(idx, await getOfficials(), eurusd);
   } catch (e) {
     errors.push(`Binance: ${(e as Error).message}`);
   }
@@ -106,6 +63,45 @@ export async function getArbitrage(feePct: number): Promise<ArbitrageResponse> {
     fetchedAt,
     errors,
   };
+}
+
+/** Official USD/<fiat> rates for the premium table. */
+export async function getOfficials(): Promise<Record<string, number>> {
+  const out: Record<string, number> = {};
+  await Promise.all(
+    PREMIUM_FIATS.map(async (f) => {
+      try {
+        const rate = (await yahooQuote(`USD${f}=X`)).meta.regularMarketPrice;
+        if (rate) out[f] = rate;
+      } catch {
+        /* skip this fiat */
+      }
+    }),
+  );
+  return out;
+}
+
+export async function getFxRates(errors: string[]): Promise<FxRate[]> {
+  const rows = await Promise.all(
+    FX_PAIRS.map(async ({ pair, label }): Promise<FxRate | null> => {
+      try {
+        const { meta } = await yahooQuote(pair);
+        const rate = meta.regularMarketPrice ?? NaN;
+        const prev = meta.chartPreviousClose ?? meta.previousClose;
+        return {
+          pair,
+          label,
+          rate,
+          changePct: prev ? (rate / prev - 1) * 100 : null,
+          asOf: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null,
+        };
+      } catch (e) {
+        errors.push(`${label}: ${(e as Error).message}`);
+        return null;
+      }
+    }),
+  );
+  return rows.filter((x): x is FxRate => !!x);
 }
 
 function demoArbitrage(feePct: number, fetchedAt: string): ArbitrageResponse {

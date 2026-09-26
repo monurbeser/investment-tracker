@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Category, Instrument, Quote, SearchResult } from "@/lib/types";
 import { CATEGORY_LABELS, CATEGORY_SHORT } from "@/lib/catalog";
 import { fmtPct, fmtPrice, signClass } from "@/lib/format";
+import { searchInstruments } from "@/lib/client/api";
 
 export type Tab = "all" | Category;
 const TABS: Tab[] = ["all", "uae", "us", "etf", "bond", "crypto"];
@@ -38,9 +39,9 @@ export function Watchlist(p: Props) {
     setSearching(true);
     const ctrl = new AbortController();
     const t = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(term)}`, { signal: ctrl.signal })
-        .then((r) => r.json())
-        .then((d: { results: SearchResult[]; errors: string[] }) => {
+      searchInstruments(term, ctrl.signal)
+        .then((d) => {
+          if (ctrl.signal.aborted) return;
           setResults(d.results ?? []);
           setSearchErr(d.errors?.length ? d.errors.join(" · ") : null);
         })

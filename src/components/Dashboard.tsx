@@ -5,6 +5,7 @@ import { CATALOG, DEFAULT_SELECTION, TICKER_TOP } from "@/lib/catalog";
 import { PERIODS, PERIOD_LABELS, normalizedSeries, periodReturn, periodStart, sliceFrom } from "@/lib/perf";
 import { mergeLive } from "@/lib/live";
 import { useQuotes } from "@/lib/client/useQuotes";
+import { fetchArbitrage, STATIC } from "@/lib/client/api";
 import { useHistories } from "@/lib/client/useHistories";
 import { marketStatuses } from "@/lib/client/markets";
 import { MAX_SERIES, seriesColor, type Theme } from "@/lib/client/palette";
@@ -104,8 +105,7 @@ export function Dashboard() {
     let timer: ReturnType<typeof setTimeout>;
     const run = async () => {
       try {
-        const r = await fetch(`/api/arbitrage?fee=${fee}`);
-        const d = (await r.json()) as ArbitrageResponse;
+        const d = await fetchArbitrage(fee);
         if (alive) {
           setArb(d);
           setArbErr(null);
@@ -210,6 +210,11 @@ export function Dashboard() {
   ];
 
   const demo = q.demo || !!arb?.demo;
+  const snapshotAt = STATIC
+    ? Object.values(q.quotes)
+        .filter((x) => !x.id.startsWith("binance:"))
+        .reduce<string | null>((m, x) => (!m || x.fetchedAt > m ? x.fetchedAt : m), null)
+    : null;
   const markets = marketStatuses(new Date(now));
   const fq = focusInst ? q.quotes[focusInst.id] : undefined;
   const fh = focusInst ? hist[focusInst.id]?.data : undefined;
@@ -223,6 +228,11 @@ export function Dashboard() {
         <div className="brand">
           <span className="logo">◆</span> DXB Invest Terminal
           {demo && <span className="demo">DEMO VERİ</span>}
+          {STATIC && (
+            <span className="badge" title="GitHub Pages sürümü: kripto Binance’ten canlı; Yahoo kaynaklı veriler GitHub Actions ile ~15 dakikada bir yenilenir">
+              Yahoo verisi: {snapshotAt ? `${new Date(snapshotAt).toLocaleTimeString("tr-TR", { timeZone: DUBAI_TZ, hour: "2-digit", minute: "2-digit" })} (${ago(snapshotAt, now)})` : "—"}
+            </span>
+          )}
         </div>
         <div className="markets">
           {markets.map((m) => (
@@ -388,6 +398,7 @@ export function Dashboard() {
           </div>
 
           <p className="disclaimer muted small">
+            {STATIC && "Bu, GitHub Pages sürümüdür: kripto fiyatları ve arbitraj tarayıcıdan doğrudan Binance’ten canlı gelir; Yahoo kaynaklı veriler (UAE/US hisseleri, ETF, döviz, tahvil modeli) ~15 dakikada bir GitHub Actions ile yenilenir. "}
             Veri kaynakları: Yahoo Finance (DFM/ADX, NYSE/NASDAQ, LSE ETF’leri, döviz, ABD Hazine getirileri), Binance Spot REST + WebSocket (kripto, arbitraj). UAE devlet tahvilleri için ücretsiz canlı fiyat
             akışı bulunmadığından, aynı vadeli ABD Hazine getirisi + ihraççı spreadi ile modellenmiş toplam getiri endeksi gösterilir. Bu panel yatırım tavsiyesi değildir.
           </p>
