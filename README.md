@@ -1,6 +1,6 @@
 # DXB Invest Terminal
 
-Dubai’de yaşayan bir yatırımcı için çoklu varlık takip paneli: UAE borsaları (DFM/ADX), NASDAQ/NYSE, UAE bankaları üzerinden alınabilen ETF/fonlar, UAE devlet tahvilleri, Binance kripto paraları ve arbitraj/döviz fırsatları — TradingView tarzı arayüzle.
+Dubai’de yaşayan bir yatırımcı için çoklu varlık takip paneli: UAE borsası (DFM), NASDAQ/NYSE, UAE bankaları üzerinden alınabilen ETF/fonlar, UAE devlet tahvilleri, Binance kripto paraları ve arbitraj/döviz fırsatları — TradingView tarzı arayüzle.
 
 ## Özellikler
 
@@ -17,7 +17,7 @@ Dubai’de yaşayan bir yatırımcı için çoklu varlık takip paneli: UAE bors
 
 | Varlık | Kaynak | Not |
 |---|---|---|
-| DFM / ADX hisseleri | Yahoo Finance (`.AE` son eki) | AED → USD 3.6725 sabit kur |
+| DFM hisseleri | Yahoo Finance (`.AE` son eki) | AED → USD 3.6725 sabit kur. ADX (Abu Dhabi) hisseleri Yahoo’da yok; ücretsiz kaynak bulunmadığından dahil edilmedi |
 | NASDAQ / NYSE, endeksler | Yahoo Finance | |
 | ETF / fonlar (UCITS dahil) | Yahoo Finance (`.L`, `.AS` …) | EUR/GBP → USD günlük kurla |
 | Kripto | Binance Spot REST + WebSocket | `data-api.binance.vision` yedek uç nokta |

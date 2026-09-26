@@ -1,7 +1,7 @@
 import type { BondSpec, Category, Instrument, Source } from "./types";
 
 export const CATEGORY_LABELS: Record<Category, string> = {
-  uae: "UAE Borsası (DFM/ADX)",
+  uae: "UAE Borsası (DFM)",
   us: "NASDAQ / NYSE",
   etf: "ETF & Yatırım Fonları",
   bond: "UAE Devlet Tahvilleri",
@@ -63,7 +63,8 @@ const b = (symbol: string, name: string, bond: BondSpec): Instrument => ({
 /**
  * Starting universe. Anything else can be added from the search box
  * (Yahoo Finance symbol search + Binance USDT pairs).
- * Yahoo uses the `.AE` suffix for both DFM and ADX listings.
+ * Yahoo lists DFM stocks with the `.AE` suffix; ADX (Abu Dhabi) listings are not
+ * carried by Yahoo, and no free ADX feed exists, so they are not included.
  */
 export const CATALOG: Instrument[] = [
   // --- UAE equities (AED) ---
@@ -76,14 +77,10 @@ export const CATALOG: Instrument[] = [
   y("AIRARABIA.AE", "Air Arabia", "uae", "AED", "DFM"),
   y("PARKIN.AE", "Parkin", "uae", "AED", "DFM"),
   y("TALABAT.AE", "Talabat", "uae", "AED", "DFM"),
-  y("ALDAR.AE", "Aldar Properties", "uae", "AED", "ADX"),
-  y("FAB.AE", "First Abu Dhabi Bank", "uae", "AED", "ADX"),
-  y("ADCB.AE", "Abu Dhabi Commercial Bank", "uae", "AED", "ADX"),
-  y("IHC.AE", "International Holding Co.", "uae", "AED", "ADX"),
-  y("EAND.AE", "e& (Etisalat)", "uae", "AED", "ADX"),
-  y("ADNOCGAS.AE", "ADNOC Gas", "uae", "AED", "ADX"),
-  y("ADNOCDRILL.AE", "ADNOC Drilling", "uae", "AED", "ADX"),
-  y("TAQA.AE", "Abu Dhabi National Energy (TAQA)", "uae", "AED", "ADX"),
+  y("DFM.AE", "Dubai Financial Market", "uae", "AED", "DFM"),
+  y("TECOM.AE", "TECOM Group", "uae", "AED", "DFM"),
+  y("EMPOWER.AE", "Empower (Emirates Central Cooling)", "uae", "AED", "DFM"),
+  y("ALANSARI.AE", "Al Ansari Financial Services", "uae", "AED", "DFM"),
 
   // --- US equities & indices (USD) ---
   y("^GSPC", "S&P 500 Endeksi", "us", "USD", "INDEX"),
@@ -190,8 +187,8 @@ export const TICKER_TOP = [
   "binance:SOLUSDT",
   "yahoo:EMAAR.AE",
   "yahoo:EMIRATESNBD.AE",
-  "yahoo:FAB.AE",
-  "yahoo:ALDAR.AE",
+  "yahoo:DIB.AE",
+  "yahoo:SALIK.AE",
   "yahoo:DEWA.AE",
   "yahoo:NVDA",
   "yahoo:AAPL",

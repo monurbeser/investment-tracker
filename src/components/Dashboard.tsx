@@ -399,7 +399,7 @@ export function Dashboard() {
 
           <p className="disclaimer muted small">
             {STATIC && "Bu, GitHub Pages sürümüdür: kripto fiyatları ve arbitraj tarayıcıdan doğrudan Binance’ten canlı gelir; Yahoo kaynaklı veriler (UAE/US hisseleri, ETF, döviz, tahvil modeli) ~15 dakikada bir GitHub Actions ile yenilenir. "}
-            Veri kaynakları: Yahoo Finance (DFM/ADX, NYSE/NASDAQ, LSE ETF’leri, döviz, ABD Hazine getirileri), Binance Spot REST + WebSocket (kripto, arbitraj). UAE devlet tahvilleri için ücretsiz canlı fiyat
+            Veri kaynakları: Yahoo Finance (DFM, NYSE/NASDAQ, LSE ETF’leri, döviz, ABD Hazine getirileri), Binance Spot REST + WebSocket (kripto, arbitraj). UAE devlet tahvilleri için ücretsiz canlı fiyat
             akışı bulunmadığından, aynı vadeli ABD Hazine getirisi + ihraççı spreadi ile modellenmiş toplam getiri endeksi gösterilir. Bu panel yatırım tavsiyesi değildir.
           </p>
         </main>
