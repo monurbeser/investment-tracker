@@ -34,8 +34,21 @@ jobs:
         continue-on-error: true
         with:
           enablement: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Start Yahoo forwarder (browser TLS fingerprint)
+        run: |
+          pip install --quiet curl_cffi
+          nohup python scripts/yahoo_proxy.py 8765 > yahoo_proxy.log 2>&1 &
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8765/ && break; sleep 1; done
       - name: Snapshot Yahoo Finance data
         run: npx tsx scripts/snapshot.ts public
+        env:
+          YAHOO_BASE: http://127.0.0.1:8765
+      - name: Yahoo forwarder log
+        if: always()
+        run: tail -n 40 yahoo_proxy.log || true
       - name: Build static site
         run: ./scripts/build-static.sh
         env:

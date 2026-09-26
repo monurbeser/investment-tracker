@@ -35,7 +35,7 @@ async function main() {
   let ok = 0;
   const failed: string[] = [];
 
-  await pool(jobs, 4, async ([inst, res]) => {
+  await pool(jobs, 3, async ([inst, res]) => {
     try {
       const h = await getHistory(inst, res);
       const bars = compactBars(h.bars);

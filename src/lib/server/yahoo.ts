@@ -2,7 +2,8 @@ import type { Bar, Resolution, SearchResult } from "../types";
 import { cached, fetchJson, UpstreamError } from "./cache";
 import { makeId } from "../catalog";
 
-const HOSTS = ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
+// YAHOO_BASE lets CI route requests through scripts/yahoo_proxy.py.
+const HOSTS = process.env.YAHOO_BASE ? [process.env.YAHOO_BASE] : ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
 
 interface ChartMeta {
   currency?: string;
@@ -112,7 +113,7 @@ interface SearchResponse {
 
 export async function yahooSearch(q: string): Promise<SearchResult[]> {
   return cached(`y:s:${q.toLowerCase()}`, 5 * 60_000, async () => {
-    const url = `${HOSTS[1]}/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&listsCount=0`;
+    const url = `${HOSTS[HOSTS.length - 1]}/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&listsCount=0`;
     const data = await fetchJson<SearchResponse>(url);
     return (data.quotes ?? [])
       .filter((x) => x.symbol && ["EQUITY", "ETF", "MUTUALFUND", "INDEX"].includes(x.quoteType ?? ""))
