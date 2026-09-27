@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { ArbitrageResponse, Instrument, Period, SearchResult } from "@/lib/types";
 import { CATALOG, DEFAULT_SELECTION, TICKER_TOP } from "@/lib/catalog";
 import { PERIODS, PERIOD_LABELS, normalizedSeries, periodReturn, periodStart, sliceFrom } from "@/lib/perf";
@@ -234,6 +235,9 @@ export function Dashboard() {
             </span>
           )}
         </div>
+        <Link href="/signals" className="navlink" title="ABD borsaları için AL/SAT sinyal platformu">
+          US Sinyaller →
+        </Link>
         <div className="markets">
           {markets.map((m) => (
             <span key={m.key} className="mkt" title={m.hours}>

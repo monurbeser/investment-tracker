@@ -13,6 +13,19 @@ Dubai’de yaşayan bir yatırımcı için çoklu varlık takip paneli: UAE bors
 - **Arbitraj & döviz:** Binance kripto-FX primi (USDT/TRY, USDT/BRL, EUR/USDT … vs resmi kur), Binance üçgen arbitrajı (ücret/bacak ayarlanabilir), USD/AED peg izleme.
 - **Veri tazeliği:** her grafik ve satırda “son veri” zamanı (Dubai saati), kaç dakika önce olduğu, verinin sunucuya çekildiği an ve kaynak gösterilir. Kripto fiyatları tarayıcıda doğrudan Binance WebSocket’inden canlı akar; diğer kotasyonlar 15 sn’de bir yenilenir.
 
+## US Sinyal Terminali (`/signals`)
+
+Ana panelden **“US Sinyaller →”** ile açılan ayrı sayfa: ABD borsalarındaki (NASDAQ, NYSE, NYSE American; Yahoo tarayıcıları üzerinden NYSE Arca / Cboe dahil tüm ABD borsaları) hisseler için teknik analiz tabanlı AL/SAT karar platformu.
+
+- **Giriş ekranı:** güncel tarih itibarıyla **AL sinyali veren 10 hisse** ve **SAT sinyali veren 10 hisse** kartları — güncel fiyat, günlük değişim, 60 günlük mini grafik, sinyal kuvveti (0–100), 20 işlem günlük tahmini kazanç/düşüş, hedef fiyat ve fiyat noktaları (Stop · H1 · H2 · H3) haritası, $ hacim, RVOL, geçmiş isabet oranı. Üstte SPY/QQQ/DIA/IWM rejimi ve piyasa genişliği.
+- **Grafik:** karta ya da listeden bir hisseye tıklayınca **TradingView lightweight-charts** mum grafiği (EMA 20/50/200, Bollinger, Supertrend, modelin geçmiş Al/Sat okları, hedef/stop çizgileri; alt panelde hacim, RSI, MACD veya sinyal skoru; 1A…5Y) ya da **TradingView gömülü canlı grafiği** (tüm zaman aralıkları, çizim araçları).
+- **Durum ekranı:** sembol, tam ad, işlem gördüğü borsa, sektör/endüstri, ülke, çalışan sayısı; **Kuvvetli Sat · Sat · Tut · Al · Kuvvetli Al gauge**’u ve Trend / Momentum / Hacim / Volatilite alt gauge’ları; fiyat noktaları tablosu, risk/ödül, ATR, destek/dirençler; **5Y, 1Y, YTD, aylık, haftalık, günlük** ortalama hacim / $ hacim / toplam hacim / getiri tablosu; kısa-orta-uzun vade trend analizi (regresyon eğimi, R²); 18 göstergenin tek tek oyu; ücretsiz API’nin verdiği tüm temel veriler (Level-1 alış/satış × adet, spread, seans öncesi/sonrası, piyasa değeri, F/K, PEG, PD/DD, beta, float, açığa satış, kurumsal sahiplik, marjlar, analist hedefleri, bilanço tarihi …).
+- **Hisse listesi:** taranan tüm hisseler; öneri/borsa/sektör filtresi, sıralama, arama. Sunucu modunda arama kutusundan tarama dışındaki herhangi bir ABD hissesi de açılabilir.
+
+**Karar algoritması** (`src/lib/signals/engine.ts`): 2026’da en çok kullanılan göstergeler — EMA dizilimi, golden/death cross, MACD, ADX/DMI, Supertrend, Ichimoku, RSI, Stokastik, CCI, 3 aylık momentum, OBV, CMF, MFI, RVOL, VWAP, Bollinger (sıkışma kırılımı), Donchian, 52 hafta konumu — her biri −1…+1 oy verir; oylar dört grupta toplanır ve ADX rejimine göre ağırlıklandırılarak −100…+100 skora çevrilir (≥45 Kuvvetli Al, ≥15 Al, ±15 Tut, ≤−15 Sat, ≤−45 Kuvvetli Sat). Tahmini kazanç, skorla ölçeklenen volatilite hareketini hissenin son 5 yılında benzer skorlardan sonra görülen 20 günlük getirilerle harmanlar. Ayrıntılar sayfadaki “Karar algoritması nasıl çalışıyor?” bölümünde. Model geleceğe bakmaz (birim testlerle doğrulanır). **Yatırım tavsiyesi değildir.**
+
+Veri: Yahoo Finance `v8/chart` (5 yıllık günlük OHLCV), `v7/quote` ve `v10/quoteSummary` (cookie + crumb; alınamazsa sayfa yalnızca grafik verisiyle çalışır), `v1/screener` (günün en aktif / en çok yükselen / düşen ABD hisseleri). Sunucu modunda tarama 15 dk önbellekte tutulur (ilk tarama ~350 hisse için 30–90 sn). GitHub Pages sürümünde tarama ve her hissenin detay JSON’u iş akışında ~15 dakikada bir üretilir; şirket profilleri yayındaki siteden 24 saat yeniden kullanılır. `DATA_MODE=demo` sentetik veriyle de çalışır.
+
 ## Veri kaynakları
 
 | Varlık | Kaynak | Not |
@@ -35,7 +48,7 @@ npm run dev                  # http://localhost:3000
 ```
 
 - `DATA_MODE=demo npm run dev` — internet erişimi olmadan arayüzü denemek için sentetik veri; ekranda **DEMO VERİ** rozeti görünür.
-- `npm test` — performans, simülasyon, tahvil modeli, arbitraj ve canlı-bar birleştirme birim testleri.
+- `npm test` — performans, simülasyon, tahvil modeli, arbitraj, canlı-bar birleştirme, teknik gösterge ve sinyal motoru birim testleri.
 - `npm run build && npm start` — üretim.
 
 > Binance, bazı bölgelerden (ör. ABD) `api.binance.com` erişimini engeller; sunucu bu durumda `data-api.binance.vision` uç noktasına düşer. BAE’den erişimde sorun beklenmez.
@@ -57,9 +70,14 @@ Yerelde statik sürümü denemek: `npx tsx scripts/snapshot.ts public && ./scrip
 ```
 src/
   app/api/{quotes,history,search,arbitrage}   Next.js API rotaları (CORS’suz proxy + önbellek)
+  app/api/signals{,/detail,/search}           US sinyal taraması, hisse detayı, ABD hisse araması
+  app/signals/  US Sinyal Terminali sayfası
   lib/server/   yahoo.ts, binance.ts, bond.ts, fx.ts, arbitrage.ts, history.ts, cache.ts, demo.ts
   lib/          perf.ts (dönem getirileri, simülasyon, tahvil modeli), arbitrage.ts, live.ts, catalog.ts
+  lib/signals/  indicators.ts (gösterge serileri), engine.ts (karar algoritması), universe.ts, store.ts
+  lib/server/usStocks.ts   Yahoo OHLCV / quote / quoteSummary / screener, tarama
   components/   Dashboard, TickerTape, Watchlist, TvChart, PerformanceTable, Simulator, ArbitragePanel
+  components/signals/   SignalsApp, SignalCard, SignalChart, TradingViewWidget, StockStatus, StockTable, parts (gauge…)
 ```
 
 Seçimler, tema ve dönem tarayıcıda (`localStorage`) hatırlanır. Bu panel yatırım tavsiyesi değildir.

@@ -3,7 +3,7 @@ import { cached, fetchJson, UpstreamError } from "./cache";
 import { makeId } from "../catalog";
 
 // YAHOO_BASE lets CI route requests through scripts/yahoo_proxy.py.
-const HOSTS = process.env.YAHOO_BASE ? [process.env.YAHOO_BASE] : ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
+export const YAHOO_HOSTS = process.env.YAHOO_BASE ? [process.env.YAHOO_BASE] : ["https://query1.finance.yahoo.com", "https://query2.finance.yahoo.com"];
 
 interface ChartMeta {
   currency?: string;
@@ -40,7 +40,7 @@ export interface YahooChart {
 
 async function chart(symbol: string, query: string): Promise<YahooChart> {
   let lastErr: unknown;
-  for (const host of HOSTS) {
+  for (const host of YAHOO_HOSTS) {
     try {
       const url = `${host}/v8/finance/chart/${encodeURIComponent(symbol)}?${query}&includePrePost=false&events=div%2Csplits`;
       const data = await fetchJson<ChartResponse>(url);
@@ -113,7 +113,7 @@ interface SearchResponse {
 
 export async function yahooSearch(q: string): Promise<SearchResult[]> {
   return cached(`y:s:${q.toLowerCase()}`, 5 * 60_000, async () => {
-    const url = `${HOSTS[HOSTS.length - 1]}/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&listsCount=0`;
+    const url = `${YAHOO_HOSTS[YAHOO_HOSTS.length - 1]}/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=15&newsCount=0&listsCount=0`;
     const data = await fetchJson<SearchResponse>(url);
     return (data.quotes ?? [])
       .filter((x) => x.symbol && ["EQUITY", "ETF", "MUTUALFUND", "INDEX"].includes(x.quoteType ?? ""))
