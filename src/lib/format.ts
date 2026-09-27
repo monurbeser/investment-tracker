@@ -53,3 +53,11 @@ export function ago(iso: string | null | undefined, now = Date.now()): string {
   if (h < 48) return `${h} sa önce`;
   return `${Math.round(h / 24)} gün önce`;
 }
+
+/** 1.23K / 4.5M / 2.1B / 3.4T */
+export function fmtCompact(v: number | null | undefined, digits = 2): string {
+  if (v == null || !isFinite(v)) return "—";
+  const a = Math.abs(v);
+  const [d, s] = a >= 1e12 ? [1e12, "T"] : a >= 1e9 ? [1e9, "B"] : a >= 1e6 ? [1e6, "M"] : a >= 1e3 ? [1e3, "K"] : [1, ""];
+  return `${(v / d).toFixed(d === 1 ? 0 : digits)}${s}`;
+}

@@ -1,7 +1,8 @@
 name: Deploy to GitHub Pages
 
 # Static build of the dashboard. Binance data is fetched live by the browser;
-# Yahoo Finance data (no CORS) is snapshotted here and republished every 15 min.
+# Yahoo Finance data (no CORS) is snapshotted here and republished every 15 min,
+# including the US signal scan (/signals).
 on:
   push:
     branches: [main, "claude/vibrant-darwin-drlrum"]
@@ -36,11 +37,13 @@ jobs:
         run: |
           pip install --quiet curl_cffi
           nohup python scripts/yahoo_proxy.py 8765 > yahoo_proxy.log 2>&1 &
-          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8765/ && break; sleep 1; done
+          for i in $(seq 1 60); do curl -s -o /dev/null http://127.0.0.1:8765/ && break; sleep 1; done
       - name: Snapshot Yahoo Finance data
         run: npx tsx scripts/snapshot.ts public
         env:
           YAHOO_BASE: http://127.0.0.1:8765
+          # company profiles are reused from the live site for 24h (US signals page)
+          PREVIOUS_SITE: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
       - name: Yahoo forwarder log
         if: always()
         run: tail -n 40 yahoo_proxy.log || true
